@@ -3,6 +3,8 @@ import { Button, Form, Input,message } from 'antd'
 import '../styles/registerstyles.css'
 import { Link,useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { useDispatch } from 'react-redux'
+import { showLoading,hideLoading } from '../redux/features/alertSlice'
 
 function Register() {
 
@@ -10,6 +12,7 @@ function Register() {
     const[email,setEmail]=useState('')
     const[password,setPassword]=useState('')
     const navigate=useNavigate();
+    const dispatch = useDispatch()
     //form handler
     const onFinishHandler=async()=>{
         try {
@@ -18,7 +21,9 @@ function Register() {
               email,
               password
             }
+            dispatch(showLoading())
             const res=await axios.post('http://localhost:8080/api/v1/user/register',body)
+            dispatch(hideLoading())
             if(res.data.success){
                 message.success('Register success')
                 navigate('/login')
@@ -26,6 +31,7 @@ function Register() {
                 message.error(res.data.message)
             }
         } catch (error) {
+          dispatch(hideLoading())
             console.log(error);
             message.error("Something went wrong")
         }

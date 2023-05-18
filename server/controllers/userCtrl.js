@@ -2,6 +2,7 @@ const userModel=require('../models/userModels')
 const bcrypt=require('bcryptjs')
 const jwt=require('jsonwebtoken')
 const dotenv=require('dotenv')
+const doctorModel = require('../models/doctorModel')
 
 //register handler
 const registerController = async(req,res) => {
@@ -50,15 +51,15 @@ const loginController = async(req,res) => {
 //Auth
 const authController = async(req,res) => {
     try {
-        const user = await userModel.findOne({_id:req.body.userId})
+        const user = await userModel.findById({_id:req.body.userId})
+        user.password = undefined
         if(!user){
             return res.status(200).send({message:"User not found",success:false})
         }else{
             return res.status(200).send({
                 success:true,
                 data:{
-                    name:user.name,
-                    email:user.email
+                    user
                 }
             })
         } 
@@ -71,8 +72,89 @@ const authController = async(req,res) => {
         })
     }
 }
+//apply doctor
+const applyDoctorController = async(req,res) => {
+    try {
+        const newDoctor = await doctorModel({...req.body,status:'pending'})
+        await newDoctor.save()
+        const adminUser=await userModel.findOne({isAdmin:true})
+        const notification = adminUser.notification
+        notification.push({
+            type:'apply-doctor-request',
+            message:`${newDoctor.firstName} ${newDoctor.lastName} has applied for a doctor account`,
+            data:{
+                doctorId:newDoctor._id,
+                name:newDoctor.firstName + " " + newDoctor.lastName,
+                onClickPath:'/admin/doctors'
+            }
+        })
+        await userModel.findByIdAndUpdate(adminUser._id,{notification})
+        res.status(200).send({
+            success:true,
+            message:'Doctor account applied successfully'
+        })
+    } catch (error) {
+        console.log(error);
+        res.status(400).send({
+            message:'Error while applying for doctor',
+            success:false,
+            error
+        })
+    }
+}
+//Notification controller
+const getAllNotificationController = async(req,res) => {
+try {
+    const user = await userModel.findOne({_id:req.body.userId})
+    const seennotification = user.seennotification
+    const notification = user.notification
+    seennotification.push(...notification)
+    user.notification = []
+    user.seennotification = notification
+    const updatedUser = await user.save()
+    res.status(200).send({
+        success:true,
+        message:"all notification marked as read",
+        data:updatedUser
+    })
+} catch (error) {
+    console.log(error);
+    res.status(400).send({
+        message:"Error in notification",
+        success:false,
+        error
+    })
+}
+}
+
+//delete all notification
+const deleteAllNotificationController = async(req,res) => {
+    try {
+    const user = await userModel.findOne({_id:req.body.userId})
+    user.notification = []
+    user.seennotification = []
+    const updateUser = await user.save()
+    updateUser.password=undefined
+    res.status(200).send({
+        success:true,
+        message:"Notifications deleted successfully",
+        data:updateUser
+    })        
+    } catch (error) {
+        console.log(error);
+        res.status(400).send({
+            message:"Error in delete notification",
+            success:false,
+            error
+        })
+    }
+}
+
 module.exports={
     loginController,
     registerController,
-    authController
+    authController,
+    applyDoctorController,
+    getAllNotificationController,
+    deleteAllNotificationController
 }
