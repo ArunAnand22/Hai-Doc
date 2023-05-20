@@ -4,7 +4,9 @@ const authMiddleware = require('../middlewares/authMiddleware')
 const { 
     getDoctorInfo,
     updateProfileController,
-    getDoctorById } = require('../controllers/doctorCtrl')
+    getDoctorById,
+    getDoctorAppointments,
+    updateStatusCtrl } = require('../controllers/doctorCtrl')
 
 //GET SINGLE DOCTOR || POST
 router.post('/getDoctorInfo',authMiddleware, getDoctorInfo)
@@ -15,4 +17,10 @@ router.post('/updateProfile', authMiddleware, updateProfileController)
 
 //GET SINGLE DOC INFO || POST
 router.post('/getDoctorById',authMiddleware, getDoctorById)
+
+//Appointments || GET
+router.get('/get-doctorappointments', authMiddleware, getDoctorAppointments)
+
+//Update request status || POST
+router.post('/update-status',authMiddleware,updateStatusCtrl)
 module.exports = router
