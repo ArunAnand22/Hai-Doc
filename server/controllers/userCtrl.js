@@ -4,8 +4,9 @@ const jwt=require('jsonwebtoken')
 const dotenv=require('dotenv')
 const doctorModel = require('../models/doctorModel')
 const appointmentModel = require('../models/appointmentModel')
+const moment = require('moment')
 
-//register handler
+//----------------register handler-----------------
 const registerController = async(req,res) => {
     try {
         const existingUser = await userModel.findOne({email:req.body.email})
@@ -29,7 +30,7 @@ const registerController = async(req,res) => {
         res.status(500).json({success:false,message:`Register failed:${error.message}`})
     }
 }
-//login handler
+//------------------login handler----------------------
 const loginController = async(req,res) => {
     try {
         const user=await userModel.findOne({email:req.body.email})
@@ -49,7 +50,7 @@ const loginController = async(req,res) => {
         res.status(401).send({message:`Error in login ctrl ${error.message}`})
     }
 }
-//Auth
+//---------------Auth-------------------------------
 const authController = async(req,res) => {
     try {
         const user = await userModel.findById({_id:req.body.userId})
@@ -73,7 +74,7 @@ const authController = async(req,res) => {
         })
     }
 }
-//apply doctor
+//----------------------apply doctor-------------------
 const applyDoctorController = async(req,res) => {
     try {
         const newDoctor = await doctorModel({...req.body,status:'pending'})
@@ -103,7 +104,7 @@ const applyDoctorController = async(req,res) => {
         })
     }
 }
-//Notification controller
+//---------------------Notification controller-------------------
 const getAllNotificationController = async(req,res) => {
 try {
     const user = await userModel.findOne({_id:req.body.userId})
@@ -128,7 +129,7 @@ try {
 }
 }
 
-//delete all notification
+//----------------delete all notification----------------------
 const deleteAllNotificationController = async(req,res) => {
     try {
     const user = await userModel.findOne({_id:req.body.userId})
@@ -151,7 +152,7 @@ const deleteAllNotificationController = async(req,res) => {
     }
 }
 
-//get all doctors
+//-------------------get all doctors---------------------
 const getAllDoctors = async(req,res) => {
     try {
         const doctors = await doctorModel.find({status:'approved'})
@@ -175,13 +176,14 @@ const getAllDoctors = async(req,res) => {
         })
     }
 }
-//book appointment
+//--------------book appointment-------------------------
 const bookAppointmentCtrl = async(req,res) => {
     try {
+        req.body.date = moment(req.body.date,'DD-MM-YYYY').toISOString()
         req.body.status = 'pending'
         const newAppointment = new appointmentModel(req.body)
         await newAppointment.save()
-        const user = await userModel.findOne({_id:req.body.userId})
+        const user = await userModel.findOne({_id:req.body.doctorInfo.userId})
         user.notification.push({
             type:'new-appointment-request',
             message:`A new appointment request from ${req.body.userInfo.name}`,
@@ -200,6 +202,56 @@ const bookAppointmentCtrl = async(req,res) => {
         })
     }
 }
+//------------booking availability----------------------
+const bookingAvailability= async(req,res) => {
+    try {
+        const date = moment(req.body.date,'DD-MM-YYYY').toISOString()
+        const doctorId = req.body.doctorId
+        const appointments = await appointmentModel.find({doctorId,date})
+        if(appointments.length > 10){
+            return res.status(300).send({
+                success:false,
+                message:"No room available for appointment"
+            })
+        }else{
+            return res.status(200).send({
+                success:true,
+                message:"Available for appointment"
+            })
+        } 
+    } catch (error) {
+        res.status(200).send({
+            success:false,
+            message:"Booking availability error",
+            error
+        })
+    }
+}
+//get user appointments
+const userAppointmentsCtrl = async(req,res) => {
+    try {
+        const appointments = await appointmentModel.find({userId:req.body.userId})
+        if(appointments){
+            res.status(200).send({
+                success:true,
+                message:"Appointments found",
+                data:appointments
+            })
+        }else{
+            res.status(200).send({
+                success:false,
+                message:"No data found"
+            })
+        }
+    } catch (error) {
+        res.status(400).send({
+            success:false,
+            message:"Error in getting appointments",
+            error
+        })
+    }
+}
+//export
 module.exports={
     loginController,
     registerController,
@@ -208,5 +260,7 @@ module.exports={
     getAllNotificationController,
     deleteAllNotificationController,
     getAllDoctors,
-    bookAppointmentCtrl
+    bookAppointmentCtrl,
+    bookingAvailability,
+    userAppointmentsCtrl
 }
