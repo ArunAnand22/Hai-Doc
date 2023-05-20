@@ -3,15 +3,40 @@ import '../styles/layoutStyles.css'
 import { adminMenu, userMenu } from '../Data/data'
 import { Link,useNavigate,useLocation } from 'react-router-dom'
 import { useSelector } from 'react-redux'
-import { message,Avatar,Badge } from 'antd'
+import { message,Badge } from 'antd'
 
 function Layout({children}) {
 
     const location = useLocation()
-    const { user } = useSelector(state=>state.user)
+    const  { user }  = useSelector(state=>state.user)
     const navigate=useNavigate()
+    
+    //doctor menu
+    const doctorMenu = [
+        {
+            name:"Home",
+            path:"/",
+            icon:"fa-solid fa-house"
+        },
+        {
+            name:"Appointments",
+            path:"/appointments",
+            icon:"fa-solid fa-list"
+        },
+        {
+            name:"Profile",
+            path:`/doctor/profile/${user?.user._id}`,
+            icon:"fa-solid fa-user"
+        }
+    ]
+    //doctor menu end
+
     //menu list
-    const SidebarMenu = user?.isAdmin ? adminMenu : userMenu
+    const SidebarMenu = (user && user.user.isAdmin) 
+    ? adminMenu 
+    : (user && user.user.isDoctor)
+    ? doctorMenu 
+    : userMenu; 
     
     //logout
     const handleLogout=()=>{

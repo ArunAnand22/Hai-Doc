@@ -1,22 +1,52 @@
-import React from 'react'
-import Layout from '../components/Layout'
-import { Form,Input,Col,Row,TimePicker,message } from 'antd'
+import React,{ useEffect, useState } from 'react'
+import Layout from '../../components/Layout'
 import axios from 'axios'
-import { useSelector,useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
+import { useParams } from 'react-router'
+import { Col,Form,Input,Row,message } from 'antd'
+import { useDispatch } from 'react-redux'
+import { showLoading,hideLoading } from '../../redux/features/alertSlice'
 import { useNavigate } from 'react-router'
-import {showLoading,hideLoading} from '../redux/features/alertSlice'
 
-function ApplyDoctor() {
+function Profile() {
+    const { user } = useSelector( state => state.user )
+    const [doctor, setDoctor] = useState(null)
+    const params = useParams()
+    const dispatch = useDispatch()
+    const navigate = useNavigate
+    //get doctor details
+    const getDoctorInfo = async() => {
+        try {
+            const res = await axios.post("http://localhost:8080/api/v1/doctor/getDoctorInfo",
+            {
+                userId:params.id
+            },
+            {
+                headers:{
+                    Authorization:`Bearer ${localStorage.getItem("token")}`
+                }
+            })
+            if(res.data.success){
+                setDoctor(res.data.data)
+            }
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
-    const {user} = useSelector(state => state.user)
-    const navigate=useNavigate()
-    const dispatch=useDispatch()
-
-    //handle form
+    useEffect(()=>{
+        getDoctorInfo()
+    },[])
+    //update doc
     const handleFinish = async(values) => {
         try {
             dispatch(showLoading())
-            const res = await axios.post('http://localhost:8080/api/v1/user/apply-doctor',{...values,userId:user._id},{
+            const res = await axios.post(
+                'http://localhost:8080/api/v1/doctor/updateProfile',
+            {
+                ...values,userId:user._id
+            },
+            {
             headers:{
                 Authorization:`Bearer ${localStorage.getItem("token")}`
             }
@@ -31,13 +61,19 @@ function ApplyDoctor() {
         } catch (error) {
             dispatch(hideLoading())
             console.log(error);
-            message.error('Something went wrong')
         }
     }
+    //update doc end
+
   return (
     <Layout>
+      <h1>Manage profile</h1>
+      {
+        doctor && (
+    <>
       <h2 className='text-center'>Apply doctor</h2>
-      <Form layout='vertical' onFinish={handleFinish} className='m-3'>
+      <Form layout='vertical' onFinish={handleFinish} className='m-3'
+       initialValues={doctor}>
             <h4 className='text-secondary'>Personal Details :</h4>
         <Row gutter={20}>
             <Col xs={24} md={24} lg={8}>
@@ -90,18 +126,19 @@ function ApplyDoctor() {
                 </Form.Item>
             </Col>
             <Col xs={24} md={24} lg={8}>
-                <Form.Item label="Timings" name="timing" required rules={[{required:true}]}>
-                    <TimePicker.RangePicker format="HH:mm"/>
-                </Form.Item>
+                
             </Col>
             <Col xs={24} md={24} lg={8}></Col>
             <Col xs={24} md={24} lg={8}>
-            <button className='btn btn-primary' type='submit'>Submit</button>
+            <button className='btn btn-primary' type='submit'>Update</button>
             </Col>
         </Row>
       </Form>
+    </>
+        )
+      }
     </Layout>
   )
 }
 
-export default ApplyDoctor
+export default Profile

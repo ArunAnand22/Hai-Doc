@@ -17,6 +17,8 @@ app.use(cors())
 app.use(express.json())
 //routes
 app.use('/api/v1/user',require('./routes/userRoutes'))
+app.use('/api/v1/admin',require('./routes/adminRoutes'))
+app.use('/api/v1/doctor',require('./routes/doctorRoutes'))
 
 //port
 const PORT=process.env.PORT || 8080

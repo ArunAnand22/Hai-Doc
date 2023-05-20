@@ -44,7 +44,7 @@ function NotificationPage() {
             dispatch(showLoading())
             const res = await axios.post(
                 "http://localhost:8080/api/v1/user/delete-all-notification",
-            {
+            { 
                 userId:user._id
             },{
                 headers:{
@@ -84,7 +84,8 @@ function NotificationPage() {
         </Tabs.TabPane>
         <Tabs.TabPane tab="Read" key={1}>
             <div className="d-flex justify-content-end">
-                <h4 className='p-2 text-primary' style={{cursor:"pointer"}} onClick={handleDeleteAllRead}>
+                <h4 className='p-2 text-primary' style={{cursor:"pointer"}}
+                onClick={handleDeleteAllRead}>
                     Delete all Read
                 </h4>
             </div>

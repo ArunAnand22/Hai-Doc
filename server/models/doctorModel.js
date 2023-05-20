@@ -45,7 +45,7 @@ const doctorSchema = new mongoose.Schema({
     },
     timing:{
         type:Object,
-        required:[true,'timings are required']
+        required:[true,'doctor timings are required']
     }
 },{timestamps:true})
 
